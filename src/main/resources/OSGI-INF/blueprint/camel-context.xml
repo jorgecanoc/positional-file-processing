@@ -41,9 +41,7 @@
     <bean class="com.isban.SplitFile" id="splitFile"/>
     <bean class="com.isban.split.DivideMethod" id="divisor"/>
     <bean class="com.isban.split.Aggregation" id="aggregationStrategy"/>
-    <bean class="com.isban.SucursalProcessor" id="sucursalProcessor"/>
-    <bean class="com.isban.ClienteProcessor" id="clienteProcessor"/>
-    <bean class="com.isban.MovimientoProcessor" id="movimientoProcessor"/>
+    <bean class="com.isban.LineProcessor" id="lineProcessor"/>
     <camelContext id="jms-example-context" xmlns="http://camel.apache.org/schema/blueprint">
         <!-- use Camel property placeholder loaded from the given file -->
         <propertyPlaceholder id="placeholder" location="classpath:sql.properties"/>
@@ -62,48 +60,16 @@
             <to id="route-to-incoming-orders" uri="activemq:incomingOrders"/>
         </route>
         <route id="read-csv-file">
-            <from id="_from4" uri="file:input/csv"/>
+            <from id="_from4" uri="file:input/MAT"/>
             <log id="_log4" message="File Name: ${file:name}"/>
-            <choice id="_choice1">
-                <when id="_when1">
-                    <simple>${file:name} == 'MOVIMIENTOS-2018ENERO.csv'</simple>
-                    <to id="_to4" uri="direct:procesaArchivoMovimiento"/>
-                </when>
-                <when id="_when2">
-                    <simple>${file:name} == 'CLIENTES.csv'</simple>
-                    <to id="_to5" uri="direct:procesaArchivoCliente"/>
-                </when>
-                <when id="_when3">
-                    <simple>${file:name} == 'SUCURSALES.csv'</simple>
-                    <to id="_to6" uri="direct:procesaArchivoSucursal"/>
-                </when>
-            </choice>
-        </route>
-        <route id="procesaArchivoMovimiento">
-            <from id="_from5" uri="direct:procesaArchivoMovimiento"/>
-            <to id="_to7" uri="bean:splitFile"/>
-            <split id="_split1" parallelProcessing="false" strategyRef="aggregationStrategy">
-                <method bean="divisor" method="divide"/>
-                <to id="_to8" uri="bean:movimientoProcessor"/>
-                <to id="_to9" uri="direct:registraMovimiento"/>
-            </split>
-        </route>
-        <route id="procesaArchivoCliente">
-            <from id="_from6" uri="direct:procesaArchivoCliente"/>
+            <setHeader headerName="FileName" id="_setHeader1">
+                <simple>${file:name}</simple>
+            </setHeader>
             <to id="_to10" uri="bean:splitFile"/>
             <split id="_split2" parallelProcessing="false" strategyRef="aggregationStrategy">
                 <method bean="divisor" method="divide"/>
-                <to id="_to11" uri="bean:clienteProcessor"/>
-                <to id="_to12" uri="direct:registraCliente"/>
-            </split>
-        </route>
-        <route id="procesaArchivoSucursal">
-            <from id="_from7" uri="direct:procesaArchivoSucursal"/>
-            <to id="_to13" uri="bean:splitFile"/>
-            <split id="_split3" parallelProcessing="false" strategyRef="aggregationStrategy">
-                <method bean="divisor" method="divide"/>
-                <to id="_to14" uri="bean:sucursalProcessor"/>
-                <to id="_to15" uri="direct:registraSucursal"/>
+                <to id="_to11" uri="bean:lineProcessor"/>
+                <log message="${body}"/>
             </split>
         </route>
         <route id="jms-cbr-route" streamCache="true">
@@ -125,21 +91,6 @@
                 </otherwise>
             </choice>
             <log id="route-final-log" message="Done processing ${file:name}"/>
-        </route>
-        <route id="registraSucursal">
-            <from id="_from1" uri="direct:registraSucursal"/>
-            <log id="_log1" message="Insertando sucursal: ${body}"/>
-            <to id="_to1" uri="sql:{{sql.insertSucursal}}"/>
-        </route>
-        <route id="registraCliente">
-            <from id="_from2" uri="direct:registraCliente"/>
-            <log id="_log2" message="Insertando cliente: ${body}"/>
-            <to id="_to2" uri="sql:{{sql.insertCliente}}"/>
-        </route>
-        <route id="registraMovimiento">
-            <from id="_from3" uri="direct:registraMovimiento"/>
-            <log id="_log3" message="Insertando movimiento: ${body}"/>
-            <to id="_to3" uri="sql:{{sql.insertMovimiento}}"/>
         </route>
     </camelContext>
 </blueprint>
