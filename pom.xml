@@ -21,7 +21,7 @@
 
   <groupId>com.isban</groupId>
   <artifactId>positional-file-processing</artifactId>
-  <version>0.0.17</version>
+  <version>0.1.0</version>
   <packaging>bundle</packaging>
   <name>Procesamiento de archivos posicionales "MAT"</name>
   <description>Se procesan archivos que efectuan operaciones matematicas y calculo de RFC</description>
