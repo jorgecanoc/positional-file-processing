@@ -24,6 +24,7 @@
     <bean class="com.isban.split.DivideMethod" id="divisor"/>
     <bean class="com.isban.split.Aggregation" id="aggregationStrategy"/>
     <bean class="com.isban.LineProcessor" id="lineProcessor"/>
+    <bean class="com.isban.AppendFoot" id="appendFoot"/>
     <camelContext id="jms-example-context" xmlns="http://camel.apache.org/schema/blueprint">
         <route id="read-csv-file">
             <from id="_from4" uri="file:input/MAT"/>
@@ -32,10 +33,24 @@
                 <simple>${file:name}</simple>
             </setHeader>
             <to id="_to10" uri="bean:splitFile"/>
+            <choice id="_choice1">
+                <when id="_when1">
+                    <simple>${in.header.Validacion_Exitosa} == 'true'</simple>
+                    <to id="_to1" uri="direct:splitFile"/>
+                    <to id="_to2" uri="bean:appendFoot"/>
+                    <to id="_to3" uri="file:output/MAT?fileName=${header.Nombre_Archivo}"/>
+                </when>
+                <otherwise id="_otherwise1">
+                    <to id="_to4" uri="file:error/MAT?fileName=${header.Nombre_Archivo_Error}"/>
+                </otherwise>
+            </choice>
+        </route>
+        <route id="splitFile">
+            <from id="_from1" uri="direct:splitFile"/>
             <split id="_split2" parallelProcessing="false" strategyRef="aggregationStrategy">
                 <method bean="divisor" method="divide"/>
                 <to id="_to11" uri="bean:lineProcessor"/>
-                <log message="${body}"/>
+                <log id="_log1" message="${body}"/>
             </split>
         </route>
     </camelContext>
